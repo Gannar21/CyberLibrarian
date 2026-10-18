@@ -1,31 +1,143 @@
+"""Retrieval eval + ablation.
+
+    python -m eval.retrieval_eval                       # keyword / vector / hybrid
+    python -m eval.retrieval_eval --full                # + hybrid+rerank (needs sentence-transformers)
+    python -m eval.retrieval_eval --rewrite             # + hybrid+rerank+rewrite (needs an LLM key)
+
+Writes eval/results/: ablation.md, ablation.json, failures.jsonl (for your failure-case notes).
+A chunk counts as relevant if it covers >= OVERLAP of the gold passage's tokens (passage-level),
+or, if a question has no passage, if it comes from the gold document (doc-level).
 """
-Owner: Person 3 (Retrieval)
+from __future__ import annotations
 
-This script must evaluate retrieval quality using the Q&A pairs in
-data/eval/questions_p1.jsonl (or another eval file passed as an argument).
+import argparse
+import glob
+import json
+import statistics
+import time
+from pathlib import Path
 
-Metrics to compute:
-    - Recall@k for k = 1, 3, 5, 10
-      (was the correct source_doc in the top-k retrieved chunks?)
-    - Mean search latency in milliseconds
+from src.retrieval import retrieve
+from src.retrieval.backend import chunk_meta, chunk_text, tokenize
 
-Relevant signatures (from src.common.schemas):
-    retrieve(query: str, k: int = 5, filters: dict | None = None)
-        -> list[RetrievalResult]
+KS = (1, 3, 5, 10)
+OVERLAP = 0.6
+PASSAGE_KEYS = ("source_passage", "passage", "gold_passage", "evidence", "context")
+DOC_KEYS = ("source_doc", "doc_id", "document_id", "source_doc_id", "source_id")
+RESULTS = Path("eval/results")
 
-    class RetrievalResult(BaseModel):
-        chunk: Chunk
-        score: float
 
-    class Chunk(BaseModel):
-        doc_id: str
-        ...
+def load_questions(pattern: str) -> list[dict]:
+    qs = []
+    for path in sorted(glob.glob(pattern)):
+        for line in Path(path).read_text().splitlines():
+            if line.strip():
+                qs.append(json.loads(line))
+    return [q for q in qs if q.get("answerable", True) is not False and q.get("type") != "unanswerable"]
 
-Usage:
-    python eval/retrieval_eval.py [--eval-file data/eval/questions_p1.jsonl]
 
-Output:
-    Print a table of Recall@k values and mean latency.
-    Write results to eval/results/<timestamp>.json.
-"""
-raise NotImplementedError("retrieval_eval.py must be implemented by Person 3")
+def _first(q, keys):
+    for k in keys:
+        if q.get(k):
+            v = q[k]
+            return v if isinstance(v, str) else " ".join(map(str, v))
+    return None
+
+
+def is_relevant(result_chunk, q: dict) -> bool:
+    passage = _first(q, PASSAGE_KEYS)
+    if passage:
+        gold = set(tokenize(passage))
+        if not gold:
+            return False
+        return len(gold & set(tokenize(chunk_text(result_chunk)))) / len(gold) >= OVERLAP
+    doc = _first(q, DOC_KEYS)
+    return bool(doc) and str(chunk_meta(result_chunk).get("doc_id")) == doc
+
+
+def failure_type(q: dict) -> str:
+    p = _first(q, PASSAGE_KEYS) or ""
+    low = p.lower()
+    if p.count("|") >= 4:
+        return "table"
+    if "```" in p or p.count("{") + p.count(";") >= 4:
+        return "code"
+    if any(w in low for w in ("see section", "refer to", "see also", "as described in")):
+        return "cross-reference"
+    if len(p) > 1500:
+        return "long-passage"
+    return "other"
+
+
+def run_config(name, questions, **kw):
+    hits = {k: 0 for k in KS}
+    rr, lat, fails = [], [], []
+    for q in questions:
+        t0 = time.perf_counter()
+        res = retrieve(q["question"], k=max(KS), **kw)
+        lat.append((time.perf_counter() - t0) * 1000)
+        chunks = [getattr(r, "chunk", r) for r in res]
+        rel = [is_relevant(c, q) for c in chunks]
+        for k in KS:
+            hits[k] += any(rel[:k])
+        rr.append(next((1 / (i + 1) for i, r in enumerate(rel) if r), 0.0))
+        if not any(rel):
+            fails.append({"config": name, "id": q.get("id"), "question": q["question"],
+                          "type": failure_type(q),
+                          "top3": [(chunk_meta(c).get("title"), chunk_text(c)[:120]) for c in chunks[:3]]})
+    n = len(questions)
+    lat_sorted = sorted(lat)
+    return {
+        "config": name, "n": n,
+        **{f"recall@{k}": round(hits[k] / n, 3) for k in KS},
+        "mrr": round(sum(rr) / n, 3),
+        "latency_p50_ms": round(statistics.median(lat), 1),
+        "latency_p95_ms": round(lat_sorted[min(n - 1, int(0.95 * n))], 1),
+    }, fails
+
+
+def to_markdown(rows) -> str:
+    cols = ["config", "n"] + [f"recall@{k}" for k in KS] + ["mrr", "latency_p50_ms", "latency_p95_ms"]
+    lines = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
+    lines += ["| " + " | ".join(str(r[c]) for c in cols) + " |" for r in rows]
+    return "\n".join(lines)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--questions", default="data/eval/questions_p*.jsonl")
+    ap.add_argument("--full", action="store_true", help="add hybrid+rerank")
+    ap.add_argument("--rewrite", action="store_true", help="add hybrid+rerank+rewrite")
+    ap.add_argument("--filters", default=None, help='JSON, e.g. \'{"source":"OWASP"}\'')
+    a = ap.parse_args()
+
+    qs = load_questions(a.questions)
+    filters = json.loads(a.filters) if a.filters else None
+    configs = [("keyword only", dict(mode="keyword")), ("vector only", dict(mode="vector")),
+               ("hybrid (RRF)", dict(mode="hybrid"))]
+    if a.full or a.rewrite:
+        configs.append(("hybrid + reranker", dict(mode="hybrid", rerank=True)))
+    if a.rewrite:
+        configs.append(("hybrid + reranker + rewrite", dict(mode="hybrid", rerank=True, rewrite=True)))
+
+    rows, all_fails = [], []
+    for name, kw in configs:
+        row, fails = run_config(name, qs, filters=filters, **kw)
+        rows.append(row)
+        all_fails += fails
+        print(f"done: {name}")
+
+    RESULTS.mkdir(parents=True, exist_ok=True)
+    (RESULTS / "ablation.json").write_text(json.dumps(rows, indent=2))
+    (RESULTS / "ablation.md").write_text(to_markdown(rows) + "\n")
+    (RESULTS / "failures.jsonl").write_text("\n".join(json.dumps(f) for f in all_fails))
+    print("\n" + to_markdown(rows))
+    by_type = {}
+    for f in all_fails:
+        if f["config"] == "hybrid (RRF)":
+            by_type[f["type"]] = by_type.get(f["type"], 0) + 1
+    print("\nHybrid failure types (paste into your PR notes):", by_type or "none")
+
+
+if __name__ == "__main__":
+    main()
