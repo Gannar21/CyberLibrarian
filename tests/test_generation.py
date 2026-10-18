@@ -37,3 +37,10 @@ def test_answer_with_no_chunks_says_i_dont_know(monkeypatch):
     resp = gen.answer("Something unrelated")
     assert resp.answerable is False
     assert resp.citations == []
+
+
+def test_normalize_filters_translates_year_range():
+    out = gen.normalize_filters({"source": ["owasp"], "year_min": 2020, "year_max": 2024})
+    assert out == {"source": ["owasp"], "year": {"min": 2020, "max": 2024}}
+    assert gen.normalize_filters(None) is None
+    assert gen.normalize_filters({}) is None
