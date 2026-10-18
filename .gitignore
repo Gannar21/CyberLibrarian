@@ -28,3 +28,4 @@ data/feedback.jsonl
 .vscode/
 .idea/
 *.swp
+logs/
