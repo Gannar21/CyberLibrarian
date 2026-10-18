@@ -1,0 +1,30 @@
+# secrets and environment
+.env
+
+# raw and processed data (can be large; teammates regenerate from loaders)
+data/raw/
+data/processed/
+
+# vector stores and index artifacts
+indexes/
+chroma/
+*.faiss
+*.faiss.index
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# feedback log contains user data
+data/feedback.jsonl
+
+# IDE
+.vscode/
+.idea/
+*.swp

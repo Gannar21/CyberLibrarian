@@ -1,0 +1,22 @@
+# Core data models and config
+pydantic>=2.5,<3.0
+python-dotenv>=1.0,<2.0
+
+# HTTP downloads and API client calls
+requests>=2.31,<3.0
+
+# PDF text extraction
+pypdf>=4.0,<5.0
+
+# Markdown parsing (used in OWASP loader)
+mistune>=3.0,<4.0
+
+# UI
+streamlit>=1.35,<2.0
+
+# API server (Person 4 placeholder; needed so imports resolve)
+fastapi>=0.111,<1.0
+uvicorn>=0.29,<1.0
+
+# Testing
+pytest>=8.0,<9.0
