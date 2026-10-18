@@ -1,35 +1,46 @@
 [
   {
     "config": "keyword only",
-    "n": 46,
-    "recall@1": 0.739,
-    "recall@3": 0.913,
-    "recall@5": 0.935,
-    "recall@10": 0.957,
-    "mrr": 0.825,
-    "latency_p50_ms": 12.6,
-    "latency_p95_ms": 23.2
+    "n": 73,
+    "recall@1": 0.781,
+    "recall@3": 0.904,
+    "recall@5": 0.932,
+    "recall@10": 0.959,
+    "mrr": 0.844,
+    "latency_p50_ms": 27.5,
+    "latency_p95_ms": 69.8
   },
   {
     "config": "vector only",
-    "n": 46,
-    "recall@1": 0.587,
-    "recall@3": 0.761,
-    "recall@5": 0.848,
-    "recall@10": 0.913,
-    "mrr": 0.683,
-    "latency_p50_ms": 79.1,
-    "latency_p95_ms": 343.9
+    "n": 73,
+    "recall@1": 0.616,
+    "recall@3": 0.795,
+    "recall@5": 0.904,
+    "recall@10": 0.945,
+    "mrr": 0.721,
+    "latency_p50_ms": 55.2,
+    "latency_p95_ms": 88.3
   },
   {
     "config": "hybrid (RRF)",
-    "n": 46,
-    "recall@1": 0.804,
-    "recall@3": 0.891,
-    "recall@5": 0.913,
-    "recall@10": 0.957,
-    "mrr": 0.856,
-    "latency_p50_ms": 80.1,
-    "latency_p95_ms": 150.6
+    "n": 73,
+    "recall@1": 0.822,
+    "recall@3": 0.945,
+    "recall@5": 0.973,
+    "recall@10": 0.986,
+    "mrr": 0.883,
+    "latency_p50_ms": 72.7,
+    "latency_p95_ms": 111.8
+  },
+  {
+    "config": "hybrid + reranker",
+    "n": 73,
+    "recall@1": 0.836,
+    "recall@3": 0.945,
+    "recall@5": 0.959,
+    "recall@10": 0.986,
+    "mrr": 0.894,
+    "latency_p50_ms": 12495.1,
+    "latency_p95_ms": 17082.1
   }
 ]
