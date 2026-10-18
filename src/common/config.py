@@ -1,5 +1,5 @@
 """
-Central configuration for CipherShelf.  Import Config from here; never
+Central configuration for CyberLibrarian.  Import Config from here; never
 hardcode paths, model names, or numeric hyperparameters elsewhere.
 """
 from __future__ import annotations

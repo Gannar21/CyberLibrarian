@@ -1,5 +1,5 @@
 """
-Shared Pydantic models and function stubs for the CipherShelf RAG pipeline.
+Shared Pydantic models and function stubs for the CyberLibrarian RAG pipeline.
 All teammates import from here; do not redefine these models elsewhere.
 """
 from __future__ import annotations
