@@ -20,6 +20,21 @@ PRICE_IN_PER_M = float(os.getenv("LLM_PRICE_INPUT_PER_M", "1.0"))
 PRICE_OUT_PER_M = float(os.getenv("LLM_PRICE_OUTPUT_PER_M", "5.0"))
 
 
+# ---------- 0. filters ----------
+def normalize_filters(filters: dict | None) -> dict | None:
+    """Translate the UI's year_min/year_max into the retriever's 'year' format."""
+    if not filters:
+        return None
+    f = dict(filters)
+    lo, hi = f.pop("year_min", None), f.pop("year_max", None)
+    if lo is not None or hi is not None:
+        f["year"] = {
+            "min": lo if lo is not None else -10**9,
+            "max": hi if hi is not None else 10**9,
+        }
+    return f or None
+
+
 # ---------- 1. retrieval (lazy import so tests don't need torch) ----------
 def _retrieve(question: str, k: int, filters: dict | None) -> list[RetrievalResult]:
     from src.retrieval.retriever import retrieve
@@ -101,7 +116,7 @@ def log_request(record: dict) -> None:
 def answer(question: str, filters: dict | None = None) -> AnswerResponse:
     """Run the full RAG pipeline: retrieve -> prompt -> generate -> parse."""
     t0 = time.perf_counter()
-    results = _retrieve(question, Config.RERANK_TOP_N, filters)
+    results = _retrieve(question, Config.RERANK_TOP_N, normalize_filters(filters))
     t1 = time.perf_counter()
 
     if not results:
