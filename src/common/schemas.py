@@ -104,10 +104,9 @@ def retrieve(
         NotImplementedError: until Person 3 implements this in
             src/retrieval/hybrid.py and wires it here.
     """
-    raise NotImplementedError(
-        "retrieve() is not yet implemented. "
-        "Person 3 must implement src/retrieval/hybrid.py and update this stub."
-    )
+    from src.retrieval.retriever import retrieve as _retrieve
+
+    return _retrieve(query, k=k, filters=filters)
 
 
 def answer(
