@@ -20,3 +20,7 @@ uvicorn>=0.29,<1.0
 
 # Testing
 pytest>=8.0,<9.0
+
+sentence-transformers
+chromadb
+rank-bm25

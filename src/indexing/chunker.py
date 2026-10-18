@@ -1,35 +1,60 @@
-"""
-Owner: Person 2 (Indexing)
 
-This module must provide a function that splits a Document into a list of
-Chunks with configurable size and overlap.  Chunk IDs must be stable and
-deterministic so that eval files produced on one machine validate on another.
+from src.common.config import Config
+from src.common.schemas import Document, Chunk
 
-Relevant signatures (from src.common.schemas):
-    class Document(BaseModel):
-        doc_id: str
-        title: str
-        source: str
-        section: str
-        date: str | None
-        url: str
-        text: str
 
-    class Chunk(BaseModel):
-        chunk_id: str
-        doc_id: str
-        title: str
-        source: str
-        section: str
-        date: str | None
-        position: int   # 0-based index within the parent document
-        text: str
+def chunk_document(
+    doc: Document,
+    chunk_size: int | None = None,
+    chunk_overlap: int | None = None,
+) -> list[Chunk]:
+    """Split one document into overlapping word-based chunks."""
 
-Required public interface:
-    def chunk_document(
-        doc: Document,
-        chunk_size: int,
-        chunk_overlap: int,
-    ) -> list[Chunk]: ...
-"""
-raise NotImplementedError("chunker.py must be implemented by Person 2")
+    size = Config.CHUNK_SIZE if chunk_size is None else chunk_size
+    overlap = (
+        Config.CHUNK_OVERLAP
+        if chunk_overlap is None
+        else chunk_overlap
+    )
+
+    if size <= 0:
+        raise ValueError("chunk_size must be greater than zero")
+
+    if overlap < 0 or overlap >= size:
+        raise ValueError(
+            "chunk_overlap must be between 0 and chunk_size - 1"
+        )
+
+    words = doc.text.split()
+
+    if not words:
+        return []
+
+    chunks = []
+    start = 0
+    position = 0
+    step = size - overlap
+
+    while start < len(words):
+        end = min(start + size, len(words))
+
+        chunks.append(
+            Chunk(
+                chunk_id=f"{doc.doc_id}-chunk-{position}",
+                doc_id=doc.doc_id,
+                title=doc.title,
+                source=doc.source,
+                section=doc.section,
+                date=doc.date,
+                position=position,
+                text=" ".join(words[start:end]),
+            )
+        )
+
+        if end == len(words):
+            break
+
+        start += step
+        position += 1
+
+    return chunks
