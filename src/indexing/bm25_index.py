@@ -1,6 +1,7 @@
 """Build, save, load, and search a BM25 keyword index."""
 
 import pickle
+import re
 from pathlib import Path
 
 from rank_bm25 import BM25Okapi
@@ -11,7 +12,7 @@ from src.common.schemas import Chunk, RetrievalResult
 
 def tokenize(text: str) -> list[str]:
     """Convert text into lowercase tokens."""
-    return text.lower().split()
+    return re.findall(r"\w+", text.lower())
 
 
 def build_bm25_index(chunks: list[Chunk]) -> BM25Okapi:
