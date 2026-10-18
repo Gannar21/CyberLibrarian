@@ -82,8 +82,7 @@ class AnswerResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Function stubs (implemented by teammates; declared here so callers can
-# import them from one stable location)
+# Entry points (declared here so callers can import them from one stable place)
 # ---------------------------------------------------------------------------
 
 def retrieve(
@@ -99,10 +98,6 @@ def retrieve(
         filters: Optional dict.  Supported keys:
                    'source' – one of SourceName values
                    'year'   – integer, filters by document date year
-
-    Raises:
-        NotImplementedError: until Person 3 implements this in
-            src/retrieval/hybrid.py and wires it here.
     """
     from src.retrieval.retriever import retrieve as _retrieve
 
@@ -118,12 +113,7 @@ def answer(
     Args:
         question: The user's natural-language question.
         filters:  Same filter keys as retrieve().
-
-    Raises:
-        NotImplementedError: until Person 4 implements this in
-            src/generation/answer.py and wires it here.
     """
-    raise NotImplementedError(
-        "answer() is not yet implemented. "
-        "Person 4 must implement src/generation/answer.py and update this stub."
-    )
+    from src.generation.answer import answer as _answer
+
+    return _answer(question, filters=filters)
