@@ -23,4 +23,4 @@ pytest>=8.0,<9.0
 
 sentence-transformers
 chromadb
-rank-bm25
+rank-bm25groq

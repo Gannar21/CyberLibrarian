@@ -28,3 +28,18 @@ data/feedback.jsonl
 .vscode/
 .idea/
 *.swp
+
+# secrets and private data
+.env
+data/chats.json
+data/feedback.jsonl
+data/requests.jsonl
+
+# generated artifacts
+data/raw/
+chroma/
+indexes/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store

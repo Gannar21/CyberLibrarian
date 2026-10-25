@@ -28,6 +28,7 @@ class Config:
     SAMPLE_JSONL: Path = DATA_SAMPLE / "documents_sample.jsonl"
     EVAL_QUESTIONS: Path = DATA_EVAL / "questions_p1.jsonl"
     FEEDBACK_JSONL: Path = REPO_ROOT / "data" / "feedback.jsonl"
+    REQUEST_LOG: Path = REPO_ROOT / "data" / "requests.jsonl"
 
     # Index artifacts (gitignored)
     INDEXES_DIR: Path = REPO_ROOT / "indexes"
@@ -43,11 +44,22 @@ class Config:
 
     # ---- Retrieval ------------------------------------------------------------
     TOP_K: int = int(os.getenv("TOP_K", "10"))       # candidates before rerank
-    RERANK_TOP_N: int = int(os.getenv("RERANK_TOP_N", "5"))  # after rerank
+    RERANK_TOP_N: int = int(os.getenv("RERANK_TOP_N", "5"))  # chunks sent to the LLM
+    USE_RERANK: bool = os.getenv("USE_RERANK", "true").lower() not in ("false", "0", "no")
 
-    # ---- LLM ------------------------------------------------------------------
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "claude-haiku-4-5-20251001")
+    # ---- LLM (Groq) -----------------------------------------------------------
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
+    # gpt-oss models spend tokens "thinking", so keep this generous
+    LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "2000"))
+    # "", "low", "medium" or "high". Empty = model default (the baseline).
+    LLM_REASONING_EFFORT: str = os.getenv("LLM_REASONING_EFFORT", "")
+    # USD per million tokens: verify against the Groq pricing page for your model
+    LLM_INPUT_PRICE_PER_MTOK: float = float(os.getenv("LLM_INPUT_PRICE_PER_MTOK", "0.15"))
+    LLM_OUTPUT_PRICE_PER_MTOK: float = float(os.getenv("LLM_OUTPUT_PRICE_PER_MTOK", "0.75"))
+    # Model used by eval/generation_eval.py to grade answers (a separate model
+    # keeps its tokens out of the generator's daily budget)
+    JUDGE_MODEL: str = os.getenv("JUDGE_MODEL", "openai/gpt-oss-20b")
 
     # ---- API / UI -------------------------------------------------------------
     API_URL: str = os.getenv("API_URL", "http://localhost:8000")

@@ -1,0 +1,22 @@
+{
+  "tag": "smoke",
+  "split": "all",
+  "model": "openai/gpt-oss-120b",
+  "judge": "openai/gpt-oss-20b",
+  "n_done": 3,
+  "n_planned": 3,
+  "n_answerable": 3,
+  "n_unanswerable": 0,
+  "answer_correctness": 0.333,
+  "faithfulness": 1.0,
+  "citation_accuracy": 1.0,
+  "answers_with_citation": 1.0,
+  "idk_recall": null,
+  "false_refusal_rate": 0.667,
+  "latency_p50_ms": 21644,
+  "latency_p95_ms": 27477,
+  "avg_tokens": 3788.0,
+  "cost_per_request": 0.000678,
+  "cost_per_1k_requests": 0.678,
+  "cost_per_100k_requests": 67.8
+}

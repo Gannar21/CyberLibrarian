@@ -7,8 +7,8 @@
     "recall@5": 0.932,
     "recall@10": 0.959,
     "mrr": 0.844,
-    "latency_p50_ms": 27.5,
-    "latency_p95_ms": 69.8
+    "latency_p50_ms": 12.1,
+    "latency_p95_ms": 29.7
   },
   {
     "config": "vector only",
@@ -18,8 +18,8 @@
     "recall@5": 0.904,
     "recall@10": 0.945,
     "mrr": 0.721,
-    "latency_p50_ms": 55.2,
-    "latency_p95_ms": 88.3
+    "latency_p50_ms": 50.6,
+    "latency_p95_ms": 137.3
   },
   {
     "config": "hybrid (RRF)",
@@ -29,18 +29,7 @@
     "recall@5": 0.973,
     "recall@10": 0.986,
     "mrr": 0.883,
-    "latency_p50_ms": 72.7,
-    "latency_p95_ms": 111.8
-  },
-  {
-    "config": "hybrid + reranker",
-    "n": 73,
-    "recall@1": 0.836,
-    "recall@3": 0.945,
-    "recall@5": 0.959,
-    "recall@10": 0.986,
-    "mrr": 0.894,
-    "latency_p50_ms": 12495.1,
-    "latency_p95_ms": 17082.1
+    "latency_p50_ms": 57.5,
+    "latency_p95_ms": 117.2
   }
 ]

@@ -1,29 +1,31 @@
-"""
-Owner: Person 4 (Generation / API)
+"""FastAPI app. Run: uvicorn src.api.main:app --reload"""
+from __future__ import annotations
 
-This module must expose a FastAPI application with at minimum:
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
-    POST /ask
-        Request body:  { "question": str, "filters": dict | None }
-        Response body: AnswerResponse (see src.common.schemas)
+from src.common.schemas import AnswerResponse
+from src.generation.answer import answer
 
-The handler should call src.generation.answer.answer() and return the result.
-Include a GET /health endpoint that returns {"status": "ok"}.
+app = FastAPI(title="CyberLibrarian")
 
-Relevant signatures (from src.common.schemas):
-    class AnswerResponse(BaseModel):
-        answer: str
-        citations: list[Citation]
-        chunks: list[RetrievalResult]
-        latency_ms: int
-        tokens: int
-        cost: float
-        answerable: bool
 
-Usage (once implemented):
-    uvicorn src.api.main:app --reload
+class AskRequest(BaseModel):
+    question: str
+    filters: dict | None = None
+    history: list[dict] | None = None   # previous chat turns: [{"role", "content"}]
 
-Note: app/client.py posts to API_URL + "/ask" and expects the AnswerResponse
-JSON shape; do not change the route or response model.
-"""
-raise NotImplementedError("main.py must be implemented by Person 4")
+
+@app.get("/health")
+def health() -> dict:
+    return {"status": "ok"}
+
+
+@app.post("/ask", response_model=AnswerResponse)
+def ask(req: AskRequest) -> AnswerResponse:
+    if not req.question.strip():
+        raise HTTPException(status_code=422, detail="question must not be empty")
+    try:
+        return answer(req.question, req.filters, req.history)
+    except Exception as e:  # keep the UI alive; details go to server logs
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")

@@ -1,0 +1,22 @@
+{
+  "tag": "smoke2_20b",
+  "split": "all",
+  "model": "openai/gpt-oss-20b",
+  "judge": "qwen/qwen3.8-27b",
+  "n_done": 5,
+  "n_planned": 5,
+  "n_answerable": 5,
+  "n_unanswerable": 0,
+  "answer_correctness": 1.0,
+  "faithfulness": 1.0,
+  "citation_accuracy": 1.0,
+  "answers_with_citation": 1.0,
+  "idk_recall": null,
+  "false_refusal_rate": 0.0,
+  "latency_p50_ms": 21492,
+  "latency_p95_ms": 30679,
+  "avg_tokens": 3822.2,
+  "cost_per_request": 0.000707,
+  "cost_per_1k_requests": 0.707,
+  "cost_per_100k_requests": 70.7
+}
