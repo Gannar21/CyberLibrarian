@@ -1,0 +1,36 @@
+# secrets
+.env
+*.env
+
+# Python artefacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Large index artefacts – never bake into the image
+indexes/
+chroma/
+*.faiss
+*.faiss.index
+
+# Raw and processed data – too large for the image; download at runtime
+data/raw/
+data/processed/
+
+# User data logs – never bake in
+data/feedback.jsonl
+data/usage_log.jsonl
+logs/
+
+# Dev tooling
+.claude/
+.vscode/
+.idea/
+.git/
+
+# Test cache
+.pytest_cache/

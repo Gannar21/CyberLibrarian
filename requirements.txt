@@ -24,3 +24,9 @@ pytest>=8.0,<9.0
 sentence-transformers
 chromadb
 rank-bm25
+
+# LLM client – used by src/retrieval/rewrite.py and src/generation/answer.py
+openai>=1.0,<2.0
+
+# FastAPI test client (starlette testclient dependency)
+httpx2
