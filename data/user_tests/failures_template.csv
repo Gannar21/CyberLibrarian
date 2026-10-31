@@ -1,0 +1,7 @@
+round,question,expected,what_happened,failure_type,notes
+round1,,,,retrieval,
+round1,,,,generation,
+round1,,,,wrong_refusal,
+round1,,,,missing_refusal,
+round1,,,,ui,
+round1,,,,other,

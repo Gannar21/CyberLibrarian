@@ -5,16 +5,20 @@ Run with:
     streamlit run app/streamlit_app.py
 
 Set USE_MOCK=false in .env (or the environment) to route to the real API.
+Set ADMIN_MODE=true to show log-download buttons (useful on hosted deployments
+where the local filesystem is wiped between restarts).
+Set TEST_ROUND=round1 (or round2) to tag usage-log entries by round.
 """
 from __future__ import annotations
 
 import datetime
 import json
+import os
 import sys
+import uuid
 from pathlib import Path
 
-# Ensure the repo root is on sys.path so that `src` and `app` are importable
-# regardless of where streamlit is invoked from.
+# Ensure repo root is on sys.path regardless of invocation directory.
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
@@ -26,6 +30,9 @@ from src.common.config import Config
 from src.common.schemas import AnswerResponse
 
 PROJECT_NAME = "CyberLibrarian"
+USAGE_LOG    = _REPO_ROOT / "data" / "usage_log.jsonl"
+ADMIN_MODE   = os.getenv("ADMIN_MODE", "false").lower() not in ("false", "0", "no")
+TEST_ROUND   = os.getenv("TEST_ROUND", "")
 
 # ---------------------------------------------------------------------------
 # Page config – must be the very first Streamlit call
@@ -104,6 +111,9 @@ if "feedback_sent" not in st.session_state:
     st.session_state.feedback_sent = False
 if "highlighted_citation" not in st.session_state:
     st.session_state.highlighted_citation = None
+# Stable random id per browser session – never contains IP or name.
+if "session_id" not in st.session_state:
+    st.session_state.session_id = uuid.uuid4().hex
 
 
 # ---------------------------------------------------------------------------
@@ -136,10 +146,50 @@ def _save_feedback(question: str, answer: str, rating: str, comment: str) -> Non
         fh.write(json.dumps(record) + "\n")
 
 
+def _log_usage(
+    question: str,
+    resp: AnswerResponse,
+    rating: str | None = None,
+) -> None:
+    """Append one line to data/usage_log.jsonl.
+
+    Never logs IPs or user names.  Fields:
+      timestamp, session_id, round, question, answerable,
+      top_source_ids, latency_ms, cost, rating (optional).
+    """
+    USAGE_LOG.parent.mkdir(parents=True, exist_ok=True)
+    record: dict = {
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "session_id": st.session_state.session_id,
+        "round": TEST_ROUND,
+        "question": question,
+        "answerable": resp.answerable,
+        "top_source_ids": [r.chunk.chunk_id for r in resp.chunks[:5]],
+        "latency_ms": resp.latency_ms,
+        "cost": resp.cost,
+    }
+    if rating is not None:
+        record["rating"] = rating
+    with USAGE_LOG.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(record) + "\n")
+
+
 def _source_badge(source: str) -> str:
     colors = {"owasp": "#e63946", "nist": "#1d3557", "mitre": "#457b9d", "cisa": "#2a9d8f"}
     color = colors.get(source, "#555")
-    return f'<span style="background:{color};color:#fff;padding:1px 6px;border-radius:3px;font-size:0.72rem;font-weight:600;">{source.upper()}</span>'
+    return (
+        f'<span style="background:{color};color:#fff;padding:1px 6px;'
+        f'border-radius:3px;font-size:0.72rem;font-weight:600;">'
+        f'{source.upper()}</span>'
+    )
+
+
+def _chunk_url(chunk_id: str, citations: list) -> str:
+    """Look up the URL for a chunk from the citations list; return '' if absent."""
+    for c in citations:
+        if c.chunk_id == chunk_id:
+            return c.url
+    return ""
 
 
 # ---------------------------------------------------------------------------
@@ -171,17 +221,43 @@ with st.sidebar:
     if Config.USE_MOCK:
         st.caption("Set USE_MOCK=false in .env to connect to the real API.")
 
+    # ADMIN_MODE: download buttons for log files so they survive a server wipe.
+    if ADMIN_MODE:
+        st.divider()
+        st.markdown("**Admin downloads**")
+        for log_path, label in [
+            (USAGE_LOG, "usage_log.jsonl"),
+            (Config.FEEDBACK_JSONL, "feedback.jsonl"),
+        ]:
+            if log_path.exists():
+                data = log_path.read_bytes()
+                st.download_button(
+                    label=f"Download {label}",
+                    data=data,
+                    file_name=label,
+                    mime="application/json",
+                )
+            else:
+                st.caption(f"{label}: no data yet")
+
 # ---------------------------------------------------------------------------
 # Main area
 # ---------------------------------------------------------------------------
 st.title(f"🔐 {PROJECT_NAME}")
 st.caption("AI-powered cybersecurity knowledge assistant — OWASP · NIST · MITRE ATT&CK")
 
+# Consent notice required for any data collection.
+st.info(
+    "Questions and ratings are logged anonymously for a course project. "
+    "No names or IP addresses are stored."
+)
+
 question_input = st.text_area(
     "Ask a cybersecurity question",
     placeholder="e.g. How should I respond to a ransomware incident?",
     height=80,
     key="question_input",
+    max_chars=500,
 )
 
 submit = st.button("Ask", type="primary", use_container_width=False)
@@ -208,6 +284,8 @@ if submit:
                 response: AnswerResponse = ask(question_input.strip(), filters or None)
                 st.session_state.response = response
                 st.session_state.question = question_input.strip()
+                # Log immediately; rating is updated on thumb press.
+                _log_usage(question_input.strip(), response)
             except Exception as exc:
                 st.error(
                     f"Could not reach the API. "
@@ -257,8 +335,10 @@ if st.session_state.response is not None:
                 is_highlighted = st.session_state.highlighted_citation == citation_id
                 card_class = "source-card highlighted" if is_highlighted else "source-card"
 
-                badge = _source_badge(chunk.source)
+                badge     = _source_badge(chunk.source)
                 score_html = f'<span class="score-badge">score {result.score:.2f}</span>'
+                # URL comes from the citation list, not from Chunk (Chunk has no url field).
+                url = _chunk_url(chunk.chunk_id, resp.citations)
 
                 st.markdown(
                     f'<div class="{card_class}" id="source-{citation_id}">'
@@ -269,12 +349,16 @@ if st.session_state.response is not None:
                     f"<strong>{chunk.title}</strong>"
                     + (f" — {chunk.section}" if chunk.section else "")
                     + f'<br><span class="meta-line">'
-                    f'<a href="{chunk.url}" target="_blank">{chunk.url[:70]}{"…" if len(chunk.url) > 70 else ""}</a>'
-                    f"</span>"
+                    + (
+                        f'<a href="{url}" target="_blank">'
+                        f'{url[:70]}{"..." if len(url) > 70 else ""}</a>'
+                        if url else "<em>no url</em>"
+                    )
+                    + f"</span>"
                     f"</div>",
                     unsafe_allow_html=True,
                 )
-                st.caption(chunk.text[:400] + ("…" if len(chunk.text) > 400 else ""))
+                st.caption(chunk.text[:400] + ("..." if len(chunk.text) > 400 else ""))
 
     # ---- Feedback --------------------------------------------------------
     st.divider()
@@ -295,6 +379,12 @@ if st.session_state.response is not None:
                     answer=resp.answer,
                     rating=rating,
                     comment=comment,
+                )
+                # Update the latest usage-log entry with the rating.
+                _log_usage(
+                    st.session_state.get("question", ""),
+                    resp,
+                    rating=rating,
                 )
                 st.session_state.feedback_sent = True
                 st.rerun()

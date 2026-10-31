@@ -21,8 +21,9 @@ venv/
 dist/
 build/
 
-# feedback log contains user data
+# usage and feedback logs contain user data
 data/feedback.jsonl
+data/usage_log.jsonl
 
 # IDE
 .vscode/
