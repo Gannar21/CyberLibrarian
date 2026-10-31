@@ -166,14 +166,40 @@ def test_invalid_source_rejected() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Stub behaviour tests
+# Delegation tests (monkeypatched backends – no network, no API key)
 # ---------------------------------------------------------------------------
 
-def test_retrieve_raises_not_implemented() -> None:
-    with pytest.raises(NotImplementedError):
-        retrieve("what is SQL injection?")
+def test_retrieve_returns_list(monkeypatch, sample_chunk: Chunk) -> None:
+    """retrieve() should delegate to the retrieval backend and return list[RetrievalResult]."""
+    import sys
+    from types import ModuleType
+
+    fake_result = RetrievalResult(chunk=sample_chunk, score=0.9)
+    fake_mod = ModuleType("src.retrieval.retriever")
+    fake_mod.retrieve = lambda query, **kwargs: [fake_result]  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "src.retrieval.retriever", fake_mod)
+
+    results = retrieve("what is SQL injection?")
+
+    assert isinstance(results, list)
+    assert len(results) == 1
+    assert isinstance(results[0], RetrievalResult)
+    assert results[0].score == pytest.approx(0.9)
 
 
-def test_answer_raises_not_implemented() -> None:
-    with pytest.raises(NotImplementedError):
-        answer("what is SQL injection?")
+def test_answer_returns_answer_response(
+    monkeypatch, sample_answer_response: AnswerResponse
+) -> None:
+    """answer() should delegate to the generation backend and return AnswerResponse."""
+    import sys
+    from types import ModuleType
+
+    fake_mod = ModuleType("src.generation.answer")
+    fake_mod.answer = lambda question, **kwargs: sample_answer_response  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "src.generation.answer", fake_mod)
+
+    result = answer("what is SQL injection?")
+
+    assert isinstance(result, AnswerResponse)
+    assert result.answerable is True
+    assert result.answer == "Use parameterized queries [1]."
