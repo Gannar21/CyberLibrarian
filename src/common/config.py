@@ -48,7 +48,20 @@ class Config:
     # ---- LLM ------------------------------------------------------------------
     LLM_MODEL: str = os.getenv("LLM_MODEL", "claude-haiku-4-5-20251001")
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
+    # ---- Answer cache ---------------------------------------------------------
+    USE_CACHE: bool = os.getenv(
+        "USE_CACHE", "true"
+    ).lower() not in ("false", "0", "no")
 
+    ANSWER_CACHE_TTL_SECONDS: int = int(
+        os.getenv("ANSWER_CACHE_TTL_SECONDS", "300")
+    )
+
+    ANSWER_CACHE_MAXSIZE: int = int(
+        os.getenv("ANSWER_CACHE_MAXSIZE", "256")
+    )
+
+    INDEX_VERSION: str = os.getenv("INDEX_VERSION", "v1")
     # ---- API / UI -------------------------------------------------------------
     API_URL: str = os.getenv("API_URL", "http://localhost:8000")
     # Set USE_MOCK=false in .env to route to the real FastAPI backend

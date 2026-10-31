@@ -6,15 +6,22 @@ import os
 
 
 def complete(prompt: str, max_tokens: int = 400) -> str:
-    import anthropic
+    from openai import OpenAI
     from src.common.config import Config
-    key = Config.LLM_API_KEY or os.getenv("ANTHROPIC_API_KEY")
+
+    key = Config.LLM_API_KEY
     if not key:
-        raise RuntimeError("Set LLM_API_KEY in .env to use LLM features")
-    r = anthropic.Anthropic(api_key=key).messages.create(
-        model=Config.LLM_MODEL, max_tokens=max_tokens,
-        messages=[{"role": "user", "content": prompt}])
-    return r.content[0].text
+        raise RuntimeError("Set LLM_API_KEY in .env")
+
+    client = OpenAI(api_key=key)
+
+    response = client.chat.completions.create(
+        model=Config.LLM_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=max_tokens,
+    )
+
+    return response.choices[0].message.content or ""
 
 
 PROMPT = """You help a search engine over cybersecurity documents (OWASP, NIST, MITRE ATT&CK).

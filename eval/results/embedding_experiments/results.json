@@ -1,0 +1,32 @@
+[
+  {
+    "config": "baseline_minilm_l6",
+    "n": 53,
+    "recall@1": 0.83,
+    "recall@3": 0.925,
+    "recall@5": 0.962,
+    "recall@10": 0.981,
+    "mrr": 0.883,
+    "latency_p50_ms": 29.5,
+    "latency_p95_ms": 36.2,
+    "chunk_count": 1864,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "chunk_size": 512,
+    "chunk_overlap": 64
+  },
+  {
+    "config": "candidate_minilm_l3",
+    "n": 53,
+    "recall@1": 0.774,
+    "recall@3": 0.925,
+    "recall@5": 0.943,
+    "recall@10": 0.962,
+    "mrr": 0.847,
+    "latency_p50_ms": 25.4,
+    "latency_p95_ms": 35.7,
+    "chunk_count": 1864,
+    "embedding_model": "paraphrase-MiniLM-L3-v2",
+    "chunk_size": 512,
+    "chunk_overlap": 64
+  }
+]

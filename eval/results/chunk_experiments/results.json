@@ -1,0 +1,47 @@
+[
+  {
+    "config": "baseline_512_64",
+    "n": 53,
+    "recall@1": 0.83,
+    "recall@3": 0.925,
+    "recall@5": 0.962,
+    "recall@10": 0.981,
+    "mrr": 0.883,
+    "latency_p50_ms": 29.1,
+    "latency_p95_ms": 38.0,
+    "chunk_count": 1864,
+    "chunk_size": 512,
+    "chunk_overlap": 64,
+    "embedding_model": "all-MiniLM-L6-v2"
+  },
+  {
+    "config": "chunk_256_32",
+    "n": 53,
+    "recall@1": 0.679,
+    "recall@3": 0.887,
+    "recall@5": 0.906,
+    "recall@10": 0.962,
+    "mrr": 0.79,
+    "latency_p50_ms": 39.4,
+    "latency_p95_ms": 53.2,
+    "chunk_count": 3272,
+    "chunk_size": 256,
+    "chunk_overlap": 32,
+    "embedding_model": "all-MiniLM-L6-v2"
+  },
+  {
+    "config": "chunk_384_48",
+    "n": 53,
+    "recall@1": 0.811,
+    "recall@3": 0.925,
+    "recall@5": 0.943,
+    "recall@10": 0.962,
+    "mrr": 0.868,
+    "latency_p50_ms": 32.8,
+    "latency_p95_ms": 50.4,
+    "chunk_count": 2317,
+    "chunk_size": 384,
+    "chunk_overlap": 48,
+    "embedding_model": "all-MiniLM-L6-v2"
+  }
+]

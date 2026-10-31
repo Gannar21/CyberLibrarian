@@ -1,0 +1,130 @@
+{
+  "dataset": "data\\eval\\questions_dev.jsonl",
+  "total_questions": 53,
+  "overall": [
+    {
+      "config": "hybrid baseline",
+      "n": 53,
+      "recall@1": 0.811,
+      "recall@3": 0.906,
+      "recall@5": 0.962,
+      "recall@10": 0.981,
+      "mrr": 0.869,
+      "latency_p50_ms": 42.4,
+      "latency_p95_ms": 56.9
+    },
+    {
+      "config": "hybrid + rewrite",
+      "n": 53,
+      "recall@1": 0.868,
+      "recall@3": 0.943,
+      "recall@5": 0.943,
+      "recall@10": 0.981,
+      "mrr": 0.907,
+      "latency_p50_ms": 1672.4,
+      "latency_p95_ms": 2157.5
+    }
+  ],
+  "by_type": {
+    "definition": {
+      "n": 28,
+      "baseline": {
+        "config": "hybrid baseline",
+        "n": 28,
+        "recall@1": 0.821,
+        "recall@3": 0.929,
+        "recall@5": 0.964,
+        "recall@10": 0.964,
+        "mrr": 0.878,
+        "latency_p50_ms": 43.8,
+        "latency_p95_ms": 68.7
+      },
+      "rewrite": {
+        "config": "hybrid + rewrite",
+        "n": 28,
+        "recall@1": 0.857,
+        "recall@3": 0.929,
+        "recall@5": 0.929,
+        "recall@10": 0.964,
+        "mrr": 0.898,
+        "latency_p50_ms": 1581.2,
+        "latency_p95_ms": 1938.2
+      }
+    },
+    "multi-part": {
+      "n": 11,
+      "baseline": {
+        "config": "hybrid baseline",
+        "n": 11,
+        "recall@1": 0.818,
+        "recall@3": 0.909,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.871,
+        "latency_p50_ms": 45.3,
+        "latency_p95_ms": 63.0
+      },
+      "rewrite": {
+        "config": "hybrid + rewrite",
+        "n": 11,
+        "recall@1": 0.818,
+        "recall@3": 0.909,
+        "recall@5": 0.909,
+        "recall@10": 1.0,
+        "mrr": 0.879,
+        "latency_p50_ms": 1623.0,
+        "latency_p95_ms": 1980.4
+      }
+    },
+    "procedure": {
+      "n": 10,
+      "baseline": {
+        "config": "hybrid baseline",
+        "n": 10,
+        "recall@1": 0.9,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.95,
+        "latency_p50_ms": 43.9,
+        "latency_p95_ms": 58.5
+      },
+      "rewrite": {
+        "config": "hybrid + rewrite",
+        "n": 10,
+        "recall@1": 0.9,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.95,
+        "latency_p50_ms": 1622.3,
+        "latency_p95_ms": 2296.1
+      }
+    },
+    "time-based": {
+      "n": 4,
+      "baseline": {
+        "config": "hybrid baseline",
+        "n": 4,
+        "recall@1": 0.5,
+        "recall@3": 0.5,
+        "recall@5": 0.75,
+        "recall@10": 1.0,
+        "mrr": 0.598,
+        "latency_p50_ms": 50.5,
+        "latency_p95_ms": 56.4
+      },
+      "rewrite": {
+        "config": "hybrid + rewrite",
+        "n": 4,
+        "recall@1": 0.75,
+        "recall@3": 0.75,
+        "recall@5": 0.75,
+        "recall@10": 1.0,
+        "mrr": 0.775,
+        "latency_p50_ms": 1690.9,
+        "latency_p95_ms": 1909.0
+      }
+    }
+  }
+}

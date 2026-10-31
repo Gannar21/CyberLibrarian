@@ -105,38 +105,111 @@ def to_markdown(rows) -> str:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--questions", default="data/eval/questions_p*.jsonl")
-    ap.add_argument("--full", action="store_true", help="add hybrid+rerank")
-    ap.add_argument("--rewrite", action="store_true", help="add hybrid+rerank+rewrite")
-    ap.add_argument("--filters", default=None, help='JSON, e.g. \'{"source":"OWASP"}\'')
+    ap.add_argument(
+        "--questions",
+        default="data/eval/questions_p*.jsonl",
+        help="Glob pattern for evaluation question files.",
+    )
+    ap.add_argument(
+        "--full",
+        action="store_true",
+        help="Add hybrid + reranker.",
+    )
+    ap.add_argument(
+        "--rewrite",
+        action="store_true",
+        help="Add hybrid + reranker + rewrite.",
+    )
+    ap.add_argument(
+        "--filters",
+        default=None,
+        help='JSON filters, e.g. \'{"source":"OWASP"}\'',
+    )
+    ap.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Optional JSON output path. When provided, existing ablation "
+             "files are not overwritten.",
+    )
     a = ap.parse_args()
 
     qs = load_questions(a.questions)
+
+    if not qs:
+        raise ValueError(
+            f"No answerable evaluation questions found: {a.questions}"
+        )
+
     filters = json.loads(a.filters) if a.filters else None
-    configs = [("keyword only", dict(mode="keyword")), ("vector only", dict(mode="vector")),
-               ("hybrid (RRF)", dict(mode="hybrid"))]
+
+    configs = [
+        ("keyword only", dict(mode="keyword")),
+        ("vector only", dict(mode="vector")),
+        ("hybrid (RRF)", dict(mode="hybrid")),
+    ]
+
     if a.full or a.rewrite:
-        configs.append(("hybrid + reranker", dict(mode="hybrid", rerank=True)))
+        configs.append(
+            ("hybrid + reranker", dict(mode="hybrid", rerank=True))
+        )
+
     if a.rewrite:
-        configs.append(("hybrid + reranker + rewrite", dict(mode="hybrid", rerank=True, rewrite=True)))
+        configs.append(
+            (
+                "hybrid + reranker + rewrite",
+                dict(mode="hybrid", rerank=True, rewrite=True),
+            )
+        )
 
     rows, all_fails = [], []
+
     for name, kw in configs:
         row, fails = run_config(name, qs, filters=filters, **kw)
         rows.append(row)
-        all_fails += fails
+        all_fails.extend(fails)
         print(f"done: {name}")
 
-    RESULTS.mkdir(parents=True, exist_ok=True)
-    (RESULTS / "ablation.json").write_text(json.dumps(rows, indent=2))
-    (RESULTS / "ablation.md").write_text(to_markdown(rows) + "\n")
-    (RESULTS / "failures.jsonl").write_text("\n".join(json.dumps(f) for f in all_fails))
-    print("\n" + to_markdown(rows))
-    by_type = {}
-    for f in all_fails:
-        if f["config"] == "hybrid (RRF)":
-            by_type[f["type"]] = by_type.get(f["type"], 0) + 1
-    print("\nHybrid failure types (paste into your PR notes):", by_type or "none")
+    table = to_markdown(rows)
+    print("\n" + table)
+
+    if a.output is not None:
+        # Write only the requested JSON file.
+        # Preserve the existing ablation results and failure reports.
+        a.output.parent.mkdir(parents=True, exist_ok=True)
+        a.output.write_text(
+            json.dumps(rows, indent=2),
+            encoding="utf-8",
+        )
+        print(f"\nResults saved to: {a.output}")
+
+    else:
+        # Preserve the original behavior when --output is omitted.
+        RESULTS.mkdir(parents=True, exist_ok=True)
+
+        (RESULTS / "ablation.json").write_text(
+            json.dumps(rows, indent=2),
+            encoding="utf-8",
+        )
+        (RESULTS / "ablation.md").write_text(
+            table + "\n",
+            encoding="utf-8",
+        )
+        (RESULTS / "failures.jsonl").write_text(
+            "\n".join(json.dumps(f) for f in all_fails),
+            encoding="utf-8",
+        )
+
+        by_type = {}
+        for failure in all_fails:
+            if failure["config"] == "hybrid (RRF)":
+                kind = failure["type"]
+                by_type[kind] = by_type.get(kind, 0) + 1
+
+        print(
+            "\nHybrid failure types (paste into your PR notes):",
+            by_type or "none",
+        )
 
 
 if __name__ == "__main__":

@@ -72,15 +72,14 @@ class Citation(BaseModel):
 class AnswerResponse(BaseModel):
     """The full response returned by the /ask endpoint and the answer() function."""
 
-    answer: str                     # LLM text with inline [1] [2] markers
+    answer: str
     citations: list[Citation]
-    chunks: list[RetrievalResult]   # raw retrieval results for the UI
+    chunks: list[RetrievalResult]
     latency_ms: int
     tokens: int
     cost: float
-    answerable: bool = True         # False when the model cannot answer from the docs
-
-
+    answerable: bool = True
+    cache_hit: bool = False
 # ---------------------------------------------------------------------------
 # Entry points (declared here so callers can import them from one stable place)
 # ---------------------------------------------------------------------------

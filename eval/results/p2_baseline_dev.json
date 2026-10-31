@@ -1,0 +1,35 @@
+[
+  {
+    "config": "keyword only",
+    "n": 53,
+    "recall@1": 0.302,
+    "recall@3": 0.34,
+    "recall@5": 0.34,
+    "recall@10": 0.34,
+    "mrr": 0.321,
+    "latency_p50_ms": 0.4,
+    "latency_p95_ms": 0.5
+  },
+  {
+    "config": "vector only",
+    "n": 53,
+    "recall@1": 0.302,
+    "recall@3": 0.34,
+    "recall@5": 0.34,
+    "recall@10": 0.358,
+    "mrr": 0.324,
+    "latency_p50_ms": 28.6,
+    "latency_p95_ms": 39.4
+  },
+  {
+    "config": "hybrid (RRF)",
+    "n": 53,
+    "recall@1": 0.34,
+    "recall@3": 0.34,
+    "recall@5": 0.34,
+    "recall@10": 0.34,
+    "mrr": 0.34,
+    "latency_p50_ms": 20.0,
+    "latency_p95_ms": 31.6
+  }
+]
