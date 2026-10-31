@@ -28,5 +28,7 @@ rank-bm25
 # LLM client – used by src/retrieval/rewrite.py and src/generation/answer.py
 openai>=1.0,<2.0
 
-# FastAPI test client (starlette testclient dependency)
+# FastAPI/Starlette test client. FastAPI 0.111+ pulls starlette>=1.8.0 (Kludex
+# fork) which deprecates plain `httpx` in favour of `httpx2`. Keep httpx2 here;
+# using `httpx` still works but prints a deprecation warning on every test run.
 httpx2
