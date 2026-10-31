@@ -10,13 +10,15 @@ Limits enforced (all configurable via environment variables):
   - RATE_LIMIT_PER_HOUR (default 20): max questions per session token per hour
   - MAX_QUESTION_LEN    (default 500): max question length in characters
 
-Session token comes from the X-Session-Id request header (set by the
-Streamlit client).  Falls back to the client IP when no header is present.
-IP is used only for rate-limiting; it is never stored or logged.
+Identity resolution (in priority order):
+  1. X-Session-Id request header  — used as the primary rate-limit key
+  2. X-Forwarded-For header        — used ONLY when TRUST_PROXY=true
+  3. client.host                   — raw TCP peer address
 
-When a limit is exceeded the middleware returns a 429 JSON response with a
-friendly message instead of forwarding to the endpoint.  Budget exhaustion
-is signalled by the endpoint itself (503) not by this middleware.
+Loopback addresses (127.0.0.1, ::1) skip the per-IP check entirely; they
+represent Streamlit calling the API from inside the same container and should
+not be penalised by the IP window.  The per-session limit still applies if
+X-Session-Id is present.
 """
 from __future__ import annotations
 
@@ -28,29 +30,36 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-_RATE_LIMIT  = int(os.getenv("RATE_LIMIT_PER_HOUR", "20"))
-_MAX_Q_LEN   = int(os.getenv("MAX_QUESTION_LEN",    "500"))
-_WINDOW_SEC  = 3600   # 1 hour rolling window
+_RATE_LIMIT   = int(os.getenv("RATE_LIMIT_PER_HOUR", "20"))
+_MAX_Q_LEN    = int(os.getenv("MAX_QUESTION_LEN",    "500"))
+_TRUST_PROXY  = os.getenv("TRUST_PROXY", "false").lower() in ("true", "1", "yes")
+_WINDOW_SEC   = 3600   # 1 hour rolling window
+_LOOPBACK     = {"127.0.0.1", "::1"}
 
-# In-memory store: {identity: [(timestamp, …), …]}
+# In-memory store: {identity: [timestamp, …]}
 # Fine for a single-process deployment; swap for Redis in multi-process setups.
 _counts: dict[str, list[float]] = defaultdict(list)
 
 
-def _identity(request: Request) -> str:
-    """Return the session token from header, or fall back to client IP."""
-    return (
-        request.headers.get("x-session-id")
-        or request.client.host   # type: ignore[union-attr]
-        or "unknown"
-    )
+def _session_id(request: Request) -> str | None:
+    return request.headers.get("x-session-id") or None
+
+
+def _ip(request: Request) -> str:
+    """Return the effective client IP, respecting TRUST_PROXY."""
+    if _TRUST_PROXY:
+        forwarded = request.headers.get("x-forwarded-for", "")
+        first = forwarded.split(",")[0].strip()
+        if first:
+            return first
+    host = getattr(request.client, "host", None) or ""
+    return host
 
 
 def _within_limit(identity: str) -> bool:
     """Slide the window and return True if the request is within quota."""
     now  = time.monotonic()
     hits = _counts[identity]
-    # Expire entries older than the window.
     _counts[identity] = [t for t in hits if now - t < _WINDOW_SEC]
     if len(_counts[identity]) >= _RATE_LIMIT:
         return False
@@ -84,9 +93,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-        # Rate-limit check.
-        identity = _identity(request)
-        if not _within_limit(identity):
+        # Per-session rate limit (if X-Session-Id is present).
+        session = _session_id(request)
+        if session and not _within_limit(session):
             return JSONResponse(
                 status_code=429,
                 content={
@@ -96,5 +105,21 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     )
                 },
             )
+
+        # Per-IP rate limit — skip for loopback (Streamlit inside the container).
+        ip = _ip(request)
+        if ip and ip not in _LOOPBACK:
+            if not session:
+                # Only apply IP limit when there is no session token.
+                if not _within_limit(ip):
+                    return JSONResponse(
+                        status_code=429,
+                        content={
+                            "detail": (
+                                f"You have reached the limit of {_RATE_LIMIT} questions "
+                                f"per hour. Please try again later."
+                            )
+                        },
+                    )
 
         return await call_next(request)
