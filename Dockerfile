@@ -1,8 +1,12 @@
-# CyberLibrarian – single container: FastAPI (port 8000) + Streamlit (port 8501)
+# CyberLibrarian – single container: FastAPI (internal) + Streamlit (public)
 #
 # Build:   docker build -t cyberlibrarian .
-# Run:     docker run -p 8000:8000 -p 8501:8501 \
+# Run:     docker run -p 8501:8501 \
 #              -e LLM_API_KEY=... -e USE_MOCK=false cyberlibrarian
+#
+# Port 8000 (FastAPI) is bound to 127.0.0.1 inside the container and is NOT
+# meant to be published.  Streamlit reaches it via http://localhost:8000.
+# Port 8501 is the only public-facing port.
 #
 # Index strategy (see scripts/start.sh): by default the index is built at
 # container start from the corpus that was baked in at image-build time.
@@ -28,13 +32,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # --- source code ------------------------------------------------------------
 COPY --chown=appuser:appuser . .
 
-# Remove secrets that must never be baked in.
-RUN rm -f .env
-
 # --- runtime user -----------------------------------------------------------
 USER appuser
 
-EXPOSE 8000 8501
+EXPOSE 8501
 
 # All configuration via environment variables; no secrets in image.
 ENV LLM_API_KEY=""       \
