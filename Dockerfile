@@ -1,12 +1,12 @@
-# CyberLibrarian – single container: FastAPI (internal) + Streamlit (public)
+# CyberLibrarian – single container
 #
 # Build:   docker build -t cyberlibrarian .
 # Run:     docker run -p 8501:8501 \
 #              -e LLM_API_KEY=... -e USE_MOCK=false cyberlibrarian
 #
-# Port 8000 (FastAPI) is bound to 127.0.0.1 inside the container and is NOT
-# meant to be published.  Streamlit reaches it via http://localhost:8000.
-# Port 8501 is the only public-facing port.
+# Default UI: app.web (FastAPI + vanilla JS) on port 8501.
+# Fallback UI: set UI=streamlit to use Streamlit instead.
+# Port 8000 (retrieval API) is bound to 127.0.0.1 — NOT meant to be published.
 #
 # Index strategy (see scripts/start.sh): by default the index is built at
 # container start from the corpus that was baked in at image-build time.
@@ -47,6 +47,8 @@ ENV LLM_API_KEY=""       \
     TEST_ROUND=""        \
     ADMIN_MODE="false"   \
     BUDGET_USD="5.0"     \
-    SKIP_INDEX_BUILD="false"
+    SKIP_INDEX_BUILD="false" \
+    UI="web"             \
+    PORT="8501"
 
 ENTRYPOINT ["bash", "scripts/start.sh"]
