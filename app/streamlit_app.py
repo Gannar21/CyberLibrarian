@@ -15,7 +15,6 @@ import datetime
 import json
 import os
 import sys
-import uuid
 from pathlib import Path
 
 # Ensure repo root is on sys.path regardless of invocation directory.
@@ -26,11 +25,12 @@ if str(_REPO_ROOT) not in sys.path:
 import streamlit as st
 
 from app.client import ask
+from app.utils import chunk_url_from_citations, log_usage, new_session_id, save_feedback
+from app.utils import USAGE_LOG
 from src.common.config import Config
 from src.common.schemas import AnswerResponse
 
 PROJECT_NAME = "CyberLibrarian"
-USAGE_LOG    = _REPO_ROOT / "data" / "usage_log.jsonl"
 ADMIN_MODE   = os.getenv("ADMIN_MODE", "false").lower() not in ("false", "0", "no")
 TEST_ROUND   = os.getenv("TEST_ROUND", "")
 
@@ -113,7 +113,7 @@ if "highlighted_citation" not in st.session_state:
     st.session_state.highlighted_citation = None
 # Stable random id per browser session – never contains IP or name.
 if "session_id" not in st.session_state:
-    st.session_state.session_id = uuid.uuid4().hex
+    st.session_state.session_id = new_session_id()
 
 
 # ---------------------------------------------------------------------------
@@ -132,48 +132,6 @@ def _answer_with_chips(answer_text: str, n_citations: int) -> str:
     return re.sub(r"\[(\d+)\]", replace, answer_text)
 
 
-def _save_feedback(question: str, answer: str, rating: str, comment: str) -> None:
-    """Append a feedback record to data/feedback.jsonl."""
-    Config.FEEDBACK_JSONL.parent.mkdir(parents=True, exist_ok=True)
-    record = {
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "question": question,
-        "answer": answer[:500],
-        "rating": rating,
-        "comment": comment,
-    }
-    with open(Config.FEEDBACK_JSONL, "a", encoding="utf-8") as fh:
-        fh.write(json.dumps(record) + "\n")
-
-
-def _log_usage(
-    question: str,
-    resp: AnswerResponse,
-    rating: str | None = None,
-) -> None:
-    """Append one line to data/usage_log.jsonl.
-
-    Never logs IPs or user names.  Fields:
-      timestamp, session_id, round, question, answerable,
-      top_source_ids, latency_ms, cost, rating (optional).
-    """
-    USAGE_LOG.parent.mkdir(parents=True, exist_ok=True)
-    record: dict = {
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "session_id": st.session_state.session_id,
-        "round": TEST_ROUND,
-        "question": question,
-        "answerable": resp.answerable,
-        "top_source_ids": [r.chunk.chunk_id for r in resp.chunks[:5]],
-        "latency_ms": resp.latency_ms,
-        "cost": resp.cost,
-    }
-    if rating is not None:
-        record["rating"] = rating
-    with USAGE_LOG.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(record) + "\n")
-
-
 def _source_badge(source: str) -> str:
     colors = {"owasp": "#e63946", "nist": "#1d3557", "mitre": "#457b9d", "cisa": "#2a9d8f"}
     color = colors.get(source, "#555")
@@ -184,12 +142,7 @@ def _source_badge(source: str) -> str:
     )
 
 
-def _chunk_url(chunk_id: str, citations: list) -> str:
-    """Look up the URL for a chunk from the citations list; return '' if absent."""
-    for c in citations:
-        if c.chunk_id == chunk_id:
-            return c.url
-    return ""
+_chunk_url = chunk_url_from_citations  # alias for backward compat
 
 
 # ---------------------------------------------------------------------------
@@ -285,7 +238,7 @@ if submit:
                 st.session_state.response = response
                 st.session_state.question = question_input.strip()
                 # Log immediately; rating is updated on thumb press.
-                _log_usage(question_input.strip(), response)
+                log_usage(st.session_state.session_id, question_input.strip(), response)
             except Exception as exc:
                 st.error(
                     f"Could not reach the API. "
@@ -374,14 +327,15 @@ if st.session_state.response is not None:
             rating = "up" if thumbs_up else "down"
             comment = st.text_input("Optional comment", key="feedback_comment")
             if st.button("Submit feedback", key="submit_feedback"):
-                _save_feedback(
+                save_feedback(
                     question=st.session_state.get("question", ""),
                     answer=resp.answer,
                     rating=rating,
                     comment=comment,
                 )
                 # Update the latest usage-log entry with the rating.
-                _log_usage(
+                log_usage(
+                    st.session_state.session_id,
                     st.session_state.get("question", ""),
                     resp,
                     rating=rating,

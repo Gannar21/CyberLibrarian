@@ -68,11 +68,18 @@ def _within_limit(identity: str) -> bool:
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Starlette middleware that enforces rate limits and question-length cap."""
+    """Starlette middleware that enforces rate limits and question-length cap.
+
+    Pass ``protected_path`` to guard a non-default path (e.g. ``/api/ask``).
+    Defaults to ``/ask`` so existing Person 4 wiring is unchanged.
+    """
+
+    def __init__(self, app, protected_path: str = "/ask", **kwargs):
+        super().__init__(app, **kwargs)
+        self._protected_path = protected_path
 
     async def dispatch(self, request: Request, call_next):
-        # Only guard the /ask endpoint.
-        if request.url.path != "/ask":
+        if request.url.path != self._protected_path:
             return await call_next(request)
 
         # Question-length check (parse body without consuming the stream).

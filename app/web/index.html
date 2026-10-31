@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CyberLibrarian – AI-powered cybersecurity knowledge assistant">
+  <title>CyberLibrarian</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">🔐</span>
+        <div class="brand-text">
+          <span class="brand-name">CyberLibrarian</span>
+          <span class="brand-tagline">AI-powered cybersecurity knowledge</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span id="mode-pill" class="mode-pill" aria-hidden="true"></span>
+        <button id="theme-toggle" class="icon-btn" aria-label="Toggle light/dark mode">
+          <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <section class="search-section" aria-label="Ask a cybersecurity question">
+      <div class="search-box-wrapper">
+        <label for="question-input" class="visually-hidden">Ask a cybersecurity question</label>
+        <textarea
+          id="question-input"
+          class="question-input"
+          placeholder="Ask a cybersecurity question…"
+          rows="3"
+          maxlength="500"
+          aria-describedby="char-count submit-hint"
+        ></textarea>
+        <div class="input-footer">
+          <span id="char-count" class="char-count" aria-live="polite" aria-atomic="true">0 / 500</span>
+          <span id="submit-hint" class="submit-hint">Enter ↵ to submit &nbsp;·&nbsp; Shift+Enter for new line</span>
+        </div>
+      </div>
+
+      <div id="example-chips" class="example-chips" role="list" aria-label="Example questions"></div>
+
+      <details id="filters-panel" class="filters-panel">
+        <summary class="filters-summary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <span>Filters</span>
+          <span id="active-filter-count" class="filter-badge" hidden>0</span>
+        </summary>
+        <div class="filters-body">
+          <div class="filter-group">
+            <p class="filter-label" id="sources-label">Sources</p>
+            <div class="source-checkboxes" role="group" aria-labelledby="sources-label">
+              <label class="checkbox-label">
+                <input type="checkbox" name="source" value="owasp">
+                <span class="source-badge badge-owasp">OWASP</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="source" value="nist">
+                <span class="source-badge badge-nist">NIST</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="source" value="mitre">
+                <span class="source-badge badge-mitre">MITRE</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="source" value="cisa">
+                <span class="source-badge badge-cisa">CISA</span>
+              </label>
+            </div>
+          </div>
+          <div class="filter-group">
+            <p class="filter-label" id="year-label">Year range</p>
+            <div class="year-range" role="group" aria-labelledby="year-label">
+              <input type="number" id="year-from" class="year-input" min="2010" max="2030" value="2015" aria-label="From year">
+              <span class="year-sep" aria-hidden="true">–</span>
+              <input type="number" id="year-to" class="year-input" min="2010" max="2030" value="2025" aria-label="To year">
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div id="active-filters" class="active-filters" role="list" aria-label="Active filters"></div>
+
+      <button id="ask-btn" class="ask-btn" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Ask
+      </button>
+    </section>
+
+    <div id="answer-area" class="answer-area" aria-live="polite" aria-atomic="false" aria-label="Answer"></div>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p class="footer-consent">Questions and ratings are logged anonymously for a course project. No names or IP addresses are stored.</p>
+      <p class="footer-attrib">
+        Sources: OWASP Cheat Sheet Series (CC BY-SA 4.0) &nbsp;·&nbsp;
+        MITRE ATT&amp;CK (Apache 2.0) &nbsp;·&nbsp;
+        NIST (public domain) &nbsp;·&nbsp;
+        CISA (public domain)
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>
