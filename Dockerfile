@@ -46,6 +46,10 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # --- source code ------------------------------------------------------------
 COPY --chown=appuser:appuser . .
 
+# --- writable dirs for runtime index artifacts ------------------------------
+RUN mkdir -p /app/indexes /app/chroma && \
+    chown -R appuser:appuser /app/indexes /app/chroma
+
 # --- runtime user -----------------------------------------------------------
 USER appuser
 
