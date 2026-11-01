@@ -3,7 +3,6 @@
 
 # raw and processed data (can be large; teammates regenerate from loaders)
 data/raw/
-data/processed/
 
 # vector stores and index artifacts
 indexes/

@@ -46,23 +46,28 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # --- source code ------------------------------------------------------------
 COPY --chown=appuser:appuser . .
 
+# --- writable dirs and pre-built indexes ------------------------------------
+RUN mkdir -p /app/indexes /app/chroma && \
+    chown -R appuser:appuser /app/indexes /app/chroma
+
+USER appuser
+RUN python -m src.indexing.build_index
+
 # --- runtime user -----------------------------------------------------------
 USER appuser
 
-EXPOSE 8501
+EXPOSE 7860
 
 # Non-secret configuration defaults. Secrets (LLM_API_KEY, etc.) must be
 # supplied at run time via -e or --env-file; do not set them here.
-ENV LLM_MODEL=""         \
-    EMBEDDING_MODEL=""   \
-    LLM_BASE_URL=""      \
+ENV LLM_BASE_URL=""      \
     API_URL="http://localhost:8000" \
     USE_MOCK="false"     \
     TEST_ROUND=""        \
     ADMIN_MODE="false"   \
     BUDGET_USD="5.0"     \
-    SKIP_INDEX_BUILD="false" \
+    SKIP_INDEX_BUILD="true" \
     UI="web"             \
-    PORT="8501"
+    PORT="7860"
 
 ENTRYPOINT ["bash", "scripts/start.sh"]

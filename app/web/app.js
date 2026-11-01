@@ -694,7 +694,7 @@ function renderMessage(msg) {
   // Avatar
   const avatar = el('div', 'msg-avatar ' + (msg.role === 'user' ? 'user-avatar-icon' : 'asst-avatar'));
   if (msg.role === 'user') {
-    avatar.textContent = 'G';
+    avatar.appendChild(svgIcon('send', 14));
   } else if (msg.role === 'error') {
     avatar.appendChild(svgIcon('shield-check', 18));
     avatar.classList.add('asst-avatar');

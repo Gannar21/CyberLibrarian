@@ -17,9 +17,8 @@ chroma/
 *.faiss
 *.faiss.index
 
-# Raw and processed data – too large for the image; download at runtime
+# Raw data – too large for the image
 data/raw/
-data/processed/
 
 # User data logs – never bake in
 data/feedback.jsonl
