@@ -46,9 +46,12 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # --- source code ------------------------------------------------------------
 COPY --chown=appuser:appuser . .
 
-# --- writable dirs for runtime index artifacts ------------------------------
+# --- writable dirs and pre-built indexes ------------------------------------
 RUN mkdir -p /app/indexes /app/chroma && \
     chown -R appuser:appuser /app/indexes /app/chroma
+
+USER appuser
+RUN python -m src.indexing.build_index
 
 # --- runtime user -----------------------------------------------------------
 USER appuser
@@ -63,7 +66,7 @@ ENV LLM_BASE_URL=""      \
     TEST_ROUND=""        \
     ADMIN_MODE="false"   \
     BUDGET_USD="5.0"     \
-    SKIP_INDEX_BUILD="false" \
+    SKIP_INDEX_BUILD="true" \
     UI="web"             \
     PORT="7860"
 
