@@ -8,8 +8,8 @@ Answer the question using ONLY the numbered sources below.
 
 Rules:
 1. Do not use any knowledge from outside the sources.
-2. After every claim, add the number of the source that supports it, like [1] or [2][3].
-3. If the sources do not contain the answer, reply exactly: {NO_ANSWER}
+2. Every sentence of your answer MUST end with the number of the source that supports it, like [1] or [2][3]. An answer without markers is invalid.
+3. If none of the sources contains information relevant to the question, reply exactly: {NO_ANSWER} If the sources contain part of the answer, give that part with citations.
 4. Keep the answer short and clear."""
 
 
