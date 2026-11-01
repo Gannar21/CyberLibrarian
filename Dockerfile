@@ -49,7 +49,7 @@ COPY --chown=appuser:appuser . .
 # --- runtime user -----------------------------------------------------------
 USER appuser
 
-EXPOSE 8501
+EXPOSE 7860
 
 # Non-secret configuration defaults. Secrets (LLM_API_KEY, etc.) must be
 # supplied at run time via -e or --env-file; do not set them here.
