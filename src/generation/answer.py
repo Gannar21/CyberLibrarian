@@ -23,7 +23,51 @@ PRICE_IN_PER_M = float(os.getenv("LLM_PRICE_INPUT_PER_M", "1.0"))
 PRICE_OUT_PER_M = float(os.getenv("LLM_PRICE_OUTPUT_PER_M", "5.0"))
 
 
-# ---------- 0. filters ----------
+# ---------- 0a. small talk (no retrieval, no LLM call) ----------
+# Patterns are matched against the WHOLE message after lowercasing and
+# stripping punctuation (apostrophes removed: "how's" -> "hows").
+_SMALL_TALK = [
+    (
+        re.compile(
+            r"(hi+|hello+|hey+|hiya|yo|howdy|salam|bonjour|hola"
+            r"|good (morning|afternoon|evening))( there| librarian| cyberlibrarian)?"
+        ),
+        "Hi there! 👋 I'm CyberLibrarian. Ask me anything about cybersecurity "
+        "and I'll answer using OWASP, NIST and MITRE ATT&CK documents.",
+    ),
+    (
+        re.compile(r"(how are you|how are you doing|hows it going|whats up|sup)"),
+        "I'm doing great, thanks for asking! 😊 What cybersecurity question can I help with?",
+    ),
+    (
+        re.compile(r"(who are you|what are you|what can you do|help|help me)"),
+        "I'm CyberLibrarian, a cybersecurity assistant. I answer questions using OWASP cheat "
+        "sheets, NIST publications and MITRE ATT&CK, and I always show my sources. "
+        "Try: \"How do I prevent SQL injection?\"",
+    ),
+    (
+        re.compile(r"(thanks|thank you|thx|ty|thank you so much)"),
+        "You're welcome! 💙 Ask me another one anytime.",
+    ),
+    (
+        re.compile(r"(bye|goodbye|see you|cya)"),
+        "Bye! Stay secure. 🔐",
+    ),
+]
+
+
+def small_talk_reply(question: str) -> str | None:
+    """Return a friendly canned reply if the whole message is small talk, else None."""
+    q = question.lower().replace("'", "").replace("\u2019", "")
+    q = re.sub(r"[^\w\s]", "", q)
+    q = re.sub(r"\s+", " ", q).strip()
+    for pattern, reply in _SMALL_TALK:
+        if pattern.fullmatch(q):
+            return reply
+    return None
+
+
+# ---------- 0b. filters ----------
 def normalize_filters(filters: dict | None) -> dict | None:
     """Translate the UI's year_min/year_max into the retriever's 'year' format."""
     if not filters:
@@ -127,6 +171,7 @@ def log_request(record: dict) -> None:
     except OSError:
         pass  # logging must never break an answer
 
+
 def _answer_cache_key(
     question: str,
     filters: dict | None,
@@ -149,10 +194,28 @@ def _answer_cache_key(
     )
 
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
 # ---------- 5. the main function ----------
 def answer(question: str, filters: dict | None = None) -> AnswerResponse:
     """Run the RAG pipeline, reusing cached answers when enabled."""
     t0 = time.perf_counter()
+
+    # 0. Greetings / small talk: answer directly, skip retrieval and the LLM.
+    reply = small_talk_reply(question)
+    if reply is not None:
+        latency_ms = int((time.perf_counter() - t0) * 1000)
+        return AnswerResponse(
+            answer=reply,
+            citations=[],
+            chunks=[],
+            latency_ms=latency_ms,
+            tokens=0,
+            cost=0.0,
+            answerable=True,  # True so the UI doesn't show the "I don't know" banner
+            cache_hit=False,
+        )
+
     normalized = normalize_filters(filters)
 
     cache_enabled = Config.USE_CACHE

@@ -3,14 +3,14 @@ from src.common.schemas import RetrievalResult
 
 NO_ANSWER = "I don't know based on the available documents."
 
-RULES = f"""You are CyberLibrarian, a cybersecurity assistant.
+RULES = f"""You are CyberLibrarian, a friendly cybersecurity assistant.
 Answer the question using ONLY the numbered sources below.
 
 Rules:
 1. Do not use any knowledge from outside the sources.
 2. After every claim, add the number of the source that supports it, like [1] or [2][3].
 3. If the sources do not contain the answer, reply exactly: {NO_ANSWER}
-4. Keep the answer short and clear."""
+4. Be friendly and conversational, but keep the answer short and clear."""
 
 
 def build_prompt(question: str, results: list[RetrievalResult]) -> str:

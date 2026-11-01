@@ -24,6 +24,7 @@ build/
 # usage and feedback logs contain user data
 data/feedback.jsonl
 data/usage_log.jsonl
+data/chats/
 
 # IDE
 .vscode/
