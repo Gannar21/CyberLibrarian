@@ -229,16 +229,132 @@ def test_logs_no_ips(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# JS security check – no innerHTML for dynamic data
+# /api/sources
 # ---------------------------------------------------------------------------
 
-def test_no_innerhtml_assignment_in_appjs():
+def test_sources_returns_200():
+    with _client() as c:
+        r = c.get("/api/sources")
+    assert r.status_code == 200
+
+
+def test_sources_shape():
+    with _client() as c:
+        r = c.get("/api/sources")
+    data = r.json()
+    assert "docs" in data
+    assert "counts" in data
+    assert isinstance(data["docs"], list)
+    assert isinstance(data["counts"], dict)
+
+
+def test_sources_no_text_field(tmp_path, monkeypatch):
+    """docs items must never expose document text."""
+    docs_file = tmp_path / "documents.jsonl"
+    docs_file.write_text(
+        json.dumps({"doc_id": "d1", "title": "T1", "source": "owasp",
+                    "text": "secret content", "url": "https://example.com"}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("src.common.config.Config.DOCUMENTS_JSONL", docs_file)
+    sys.modules.pop("app.web", None)
+    sys.modules.pop("app.rate_limit", None)
+    import app.web as _w
+    _w._sources_cache = None
+    with TestClient(_w.app, raise_server_exceptions=False) as c:
+        r = c.get("/api/sources")
+    assert r.status_code == 200
+    data = r.json()
+    for doc in data["docs"]:
+        assert "text" not in doc, "sources endpoint must not expose document text"
+
+
+def test_sources_counts_per_source(tmp_path, monkeypatch):
+    """counts dict must tally each source correctly."""
+    docs_file = tmp_path / "documents.jsonl"
+    lines = [
+        json.dumps({"doc_id": "a1", "title": "A1", "source": "owasp"}),
+        json.dumps({"doc_id": "a2", "title": "A2", "source": "owasp"}),
+        json.dumps({"doc_id": "b1", "title": "B1", "source": "mitre"}),
+    ]
+    docs_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    monkeypatch.setattr("src.common.config.Config.DOCUMENTS_JSONL", docs_file)
+    sys.modules.pop("app.web", None)
+    sys.modules.pop("app.rate_limit", None)
+    import app.web as _w
+    _w._sources_cache = None
+    with TestClient(_w.app, raise_server_exceptions=False) as c:
+        r = c.get("/api/sources")
+    data = r.json()
+    assert data["counts"]["owasp"] == 2
+    assert data["counts"]["mitre"] == 1
+
+
+def test_sources_empty_when_no_files(tmp_path, monkeypatch):
+    monkeypatch.setattr("src.common.config.Config.DOCUMENTS_JSONL", tmp_path / "missing.jsonl")
+    monkeypatch.setattr("src.common.config.Config.SAMPLE_JSONL", tmp_path / "missing2.jsonl")
+    sys.modules.pop("app.web", None)
+    sys.modules.pop("app.rate_limit", None)
+    import app.web as _w
+    _w._sources_cache = None
+    with TestClient(_w.app, raise_server_exceptions=False) as c:
+        r = c.get("/api/sources")
+    data = r.json()
+    assert data["docs"] == []
+    assert data["counts"] == {}
+
+
+# ---------------------------------------------------------------------------
+# JS/HTML security checks – no unsafe DOM sinks
+# ---------------------------------------------------------------------------
+
+_UNSAFE_PATTERNS = [
+    r'\.innerHTML\s*=',
+    r'\.outerHTML\s*=',
+    r'\.insertAdjacentHTML\s*\(',
+    r'\bdocument\.write\s*\(',
+    r'\beval\s*\(',
+]
+
+_SECURITY_CONTRACT_COMMENT = "Security contract"
+
+
+def test_no_unsafe_dom_sinks_in_appjs():
     js_path = Path(__file__).parent.parent / "app" / "web" / "app.js"
     assert js_path.exists(), "app/web/app.js not found"
     content = js_path.read_text(encoding="utf-8")
-    matches = re.findall(r'\.innerHTML\s*=', content)
-    assert len(matches) == 0, \
-        f"Found {len(matches)} innerHTML= assignment(s) in app.js – use textContent instead"
+    violations = []
+    for pat in _UNSAFE_PATTERNS:
+        hits = re.findall(pat, content)
+        if hits:
+            violations.append(f"{pat}: {len(hits)} occurrence(s)")
+    assert not violations, (
+        "Unsafe DOM sink(s) found in app.js:\n  " + "\n  ".join(violations)
+    )
+
+
+def test_no_unsafe_dom_sinks_in_indexhtml():
+    html_path = Path(__file__).parent.parent / "app" / "web" / "index.html"
+    assert html_path.exists(), "app/web/index.html not found"
+    content = html_path.read_text(encoding="utf-8")
+    violations = []
+    for pat in _UNSAFE_PATTERNS:
+        hits = re.findall(pat, content)
+        if hits:
+            violations.append(f"{pat}: {len(hits)} occurrence(s)")
+    assert not violations, (
+        "Unsafe DOM sink(s) found in index.html:\n  " + "\n  ".join(violations)
+    )
+
+
+def test_appjs_has_security_contract():
+    """app.js must declare its security contract at the top of the file."""
+    js_path = Path(__file__).parent.parent / "app" / "web" / "app.js"
+    content = js_path.read_text(encoding="utf-8")
+    # Contract comment must appear in the first 40 lines
+    first_lines = "\n".join(content.splitlines()[:40])
+    assert _SECURITY_CONTRACT_COMMENT in first_lines, \
+        "app.js must have a security-contract comment in the first 40 lines"
 
 
 # ---------------------------------------------------------------------------

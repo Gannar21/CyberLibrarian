@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="auto">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,109 +9,150 @@
   <script src="/static/app.js" defer></script>
 </head>
 <body>
+  <div id="app">
 
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="brand">
-        <span class="brand-icon" aria-hidden="true">🔐</span>
-        <div class="brand-text">
-          <span class="brand-name">CyberLibrarian</span>
-          <span class="brand-tagline">AI-powered cybersecurity knowledge</span>
+    <!-- ===== Top bar ===== -->
+    <header id="top-bar">
+      <div id="logo-area">
+        <!-- Shield-check icon -->
+        <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <polyline points="9 12 11 14 15 10"/>
+        </svg>
+        <span class="logo-text">
+          <span class="logo-cyber">Cyber</span><span class="logo-lib">Librarian</span>
+        </span>
+        <span id="mode-pill" class="mode-pill" hidden aria-hidden="true">MOCK</span>
+      </div>
+
+      <div id="header-search-wrap">
+        <label for="header-search" class="visually-hidden">Search knowledge base</label>
+        <div class="header-search-inner">
+          <!-- Search icon -->
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input id="header-search" type="search" placeholder="Search knowledge base…" autocomplete="off" aria-label="Search knowledge base">
+          <kbd class="search-kbd" aria-hidden="true">/</kbd>
         </div>
       </div>
-      <div class="header-actions">
-        <span id="mode-pill" class="mode-pill" aria-hidden="true"></span>
-        <button id="theme-toggle" class="icon-btn" aria-label="Toggle light/dark mode">
-          <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-          <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+
+      <div id="header-right">
+        <button id="user-menu-btn" class="user-menu-btn" type="button" aria-label="User menu" aria-haspopup="true" aria-expanded="false">
+          <span class="user-avatar-small" aria-hidden="true">G</span>
+        </button>
+        <div id="user-menu" class="user-menu" hidden role="menu" aria-label="User options">
+          <button id="theme-toggle-menu" class="menu-item" type="button" role="menuitem">
+            <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <span id="theme-toggle-label">Light mode</span>
+          </button>
+          <!-- Admin download links injected by JS when admin_mode=true -->
+          <div id="admin-links"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== Shell: sidebar + center + aside ===== -->
+    <div id="shell">
+
+      <!-- Left sidebar -->
+      <nav id="sidebar" aria-label="Main navigation">
+        <ul id="sidebar-nav" class="nav-list" role="list">
+          <!-- Items built by JS -->
+        </ul>
+        <div id="sidebar-footer" class="sidebar-footer">
+          <!-- test_round label injected by JS -->
+        </div>
+      </nav>
+
+      <!-- Center content -->
+      <main id="center">
+        <!-- Chat view -->
+        <div id="chat-view" class="view active-view">
+          <div id="chat-messages" role="log" aria-live="polite" aria-label="Conversation"></div>
+          <div id="input-area">
+            <div id="active-filter-tags" role="list" aria-label="Active filters"></div>
+            <div id="filter-popover" class="filter-popover" hidden aria-label="Filter options">
+              <!-- Populated by JS -->
+            </div>
+            <div class="input-bar">
+              <button id="filter-btn" class="filter-btn" type="button" aria-label="Filters" aria-haspopup="true" aria-expanded="false">
+                <!-- Sliders icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="4" y1="6" x2="20" y2="6"/>
+                  <line x1="8" y1="12" x2="20" y2="12"/>
+                  <line x1="12" y1="18" x2="20" y2="18"/>
+                  <circle cx="4" cy="6" r="2"/>
+                  <circle cx="8" cy="12" r="2"/>
+                  <circle cx="12" cy="18" r="2"/>
+                </svg>
+                <span id="filter-badge" class="filter-count-badge" hidden aria-hidden="true">0</span>
+              </button>
+              <div class="input-divider" aria-hidden="true"></div>
+              <label for="question-input" class="visually-hidden">Ask a cybersecurity question</label>
+              <textarea
+                id="question-input"
+                class="question-textarea"
+                placeholder="Ask about OWASP, NIST, or MITRE ATT&amp;CK…"
+                rows="1"
+                maxlength="500"
+                aria-describedby="char-counter"
+              ></textarea>
+              <span id="char-counter" class="char-counter" aria-live="polite" aria-atomic="true" hidden></span>
+              <button id="send-btn" class="send-btn" type="button" aria-label="Send question" disabled>
+                <!-- Send (arrow-up) icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="19" x2="12" y2="5"/>
+                  <polyline points="5 12 12 5 19 12"/>
+                </svg>
+              </button>
+            </div>
+            <p class="input-hint" id="input-hint-text">
+              Enter to send &nbsp;·&nbsp; Shift+Enter for new line &nbsp;·&nbsp; Questions are logged anonymously for a course project.
+            </p>
+          </div>
+        </div>
+        <!-- Other views (KB, History, Settings) injected by JS -->
+      </main>
+
+      <!-- Right sources panel -->
+      <aside id="sources-panel" aria-label="Retrieved Sources">
+        <div class="panel-header">
+          <svg class="panel-header-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span class="panel-header-title">Retrieved Sources</span>
+          <span id="sources-count" class="sources-count" hidden aria-hidden="true"></span>
+        </div>
+        <div id="sources-list" aria-live="polite" aria-label="Source cards"></div>
+      </aside>
+
+    </div><!-- #shell -->
+
+    <!-- Mobile bottom tab bar (hidden on large screens) -->
+    <nav id="bottom-tabs" aria-label="Mobile navigation" hidden>
+      <!-- Built by JS -->
+    </nav>
+
+    <!-- Mobile sources drawer -->
+    <div id="sources-drawer" hidden role="dialog" aria-label="Retrieved Sources" aria-modal="true">
+      <div class="drawer-header">
+        <span class="drawer-title">Retrieved Sources</span>
+        <button id="drawer-close-btn" class="drawer-close-btn" type="button" aria-label="Close sources drawer">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
         </button>
       </div>
+      <div id="drawer-sources-list"></div>
     </div>
-  </header>
+    <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
 
-  <main class="main-content">
-
-    <section class="search-section" aria-label="Ask a cybersecurity question">
-      <div class="search-box-wrapper">
-        <label for="question-input" class="visually-hidden">Ask a cybersecurity question</label>
-        <textarea
-          id="question-input"
-          class="question-input"
-          placeholder="Ask a cybersecurity question…"
-          rows="3"
-          maxlength="500"
-          aria-describedby="char-count submit-hint"
-        ></textarea>
-        <div class="input-footer">
-          <span id="char-count" class="char-count" aria-live="polite" aria-atomic="true">0 / 500</span>
-          <span id="submit-hint" class="submit-hint">Enter ↵ to submit &nbsp;·&nbsp; Shift+Enter for new line</span>
-        </div>
-      </div>
-
-      <div id="example-chips" class="example-chips" role="list" aria-label="Example questions"></div>
-
-      <details id="filters-panel" class="filters-panel">
-        <summary class="filters-summary">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          <span>Filters</span>
-          <span id="active-filter-count" class="filter-badge" hidden>0</span>
-        </summary>
-        <div class="filters-body">
-          <div class="filter-group">
-            <p class="filter-label" id="sources-label">Sources</p>
-            <div class="source-checkboxes" role="group" aria-labelledby="sources-label">
-              <label class="checkbox-label">
-                <input type="checkbox" name="source" value="owasp">
-                <span class="source-badge badge-owasp">OWASP</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="source" value="nist">
-                <span class="source-badge badge-nist">NIST</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="source" value="mitre">
-                <span class="source-badge badge-mitre">MITRE</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="source" value="cisa">
-                <span class="source-badge badge-cisa">CISA</span>
-              </label>
-            </div>
-          </div>
-          <div class="filter-group">
-            <p class="filter-label" id="year-label">Year range</p>
-            <div class="year-range" role="group" aria-labelledby="year-label">
-              <input type="number" id="year-from" class="year-input" min="2010" max="2030" value="2015" aria-label="From year">
-              <span class="year-sep" aria-hidden="true">–</span>
-              <input type="number" id="year-to" class="year-input" min="2010" max="2030" value="2025" aria-label="To year">
-            </div>
-          </div>
-        </div>
-      </details>
-
-      <div id="active-filters" class="active-filters" role="list" aria-label="Active filters"></div>
-
-      <button id="ask-btn" class="ask-btn" type="button">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Ask
-      </button>
-    </section>
-
-    <div id="answer-area" class="answer-area" aria-live="polite" aria-atomic="false" aria-label="Answer"></div>
-
-  </main>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <p class="footer-consent">Questions and ratings are logged anonymously for a course project. No names or IP addresses are stored.</p>
-      <p class="footer-attrib">
-        Sources: OWASP Cheat Sheet Series (CC BY-SA 4.0) &nbsp;·&nbsp;
-        MITRE ATT&amp;CK (Apache 2.0) &nbsp;·&nbsp;
-        NIST (public domain) &nbsp;·&nbsp;
-        CISA (public domain)
-      </p>
-    </div>
-  </footer>
-
+  </div><!-- #app -->
 </body>
 </html>

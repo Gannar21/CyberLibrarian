@@ -89,6 +89,38 @@ app.mount("/static", StaticFiles(directory=str(_WEB_DIR)), name="static")
 
 
 # ---------------------------------------------------------------------------
+# Sources cache
+# ---------------------------------------------------------------------------
+
+_sources_cache: dict | None = None
+
+
+def _load_sources_data() -> dict:
+    paths = [Config.DOCUMENTS_JSONL, Config.SAMPLE_JSONL]
+    docs = []
+    for path in paths:
+        if path.exists():
+            with path.open(encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        d = json.loads(line)
+                        if d.get("doc_id") and d.get("title") and d.get("source"):
+                            docs.append({
+                                "doc_id": d["doc_id"],
+                                "title": d["title"],
+                                "source": d["source"],
+                            })
+                    except (json.JSONDecodeError, KeyError):
+                        pass
+            if docs:
+                break
+    counts: dict[str, int] = {}
+    for d in docs:
+        counts[d["source"]] = counts.get(d["source"], 0) + 1
+    return {"docs": docs, "counts": counts}
+
+
+# ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 
@@ -112,7 +144,16 @@ async def get_config():
         "test_round": os.getenv("TEST_ROUND", ""),
         "example_questions": _EXAMPLE_QUESTIONS,
         "max_question_len": int(os.getenv("MAX_QUESTION_LEN", "500")),
+        "admin_mode": os.getenv("ADMIN_MODE", "false").lower() not in ("false", "0", "no"),
     }
+
+
+@app.get("/api/sources")
+async def get_sources():
+    global _sources_cache
+    if _sources_cache is None:
+        _sources_cache = _load_sources_data()
+    return _sources_cache
 
 
 @app.post("/api/ask")
