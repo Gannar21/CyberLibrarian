@@ -16,10 +16,12 @@ def pct(xs, p):
 
 
 def norm(r: dict) -> dict:
-    tin, tout = r.get("in_tokens", 0), r.get("out_tokens", 0)
+    tin = r.get("in_tokens", r.get("input_tokens", 0))
+    tout = r.get("out_tokens", r.get("output_tokens", 0))
     tokens = tin + tout if (tin or tout) else r.get("tokens", 0)
-    ret, gen = r.get("retrieval_ms", 0), r.get("gen_ms", 0)
-    cached = bool(r.get("cached"))
+    ret = r.get("retrieval_ms", 0)
+    gen = r.get("gen_ms", r.get("generation_ms", 0))
+    cached = bool(r.get("cached", r.get("cache_hit", False)))
     return {"ret": ret, "gen": gen, "total": ret + gen, "tokens": tokens,
             "cost": r.get("cost", 0.0), "cached": cached,
             "llm": tokens > 0 and not cached, "skipped": r.get("skipped")}
