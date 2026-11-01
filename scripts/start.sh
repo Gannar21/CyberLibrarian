@@ -18,8 +18,8 @@ cd /app
 
 # --- optional index build ---------------------------------------------------
 if [ "${SKIP_INDEX_BUILD:-false}" != "true" ]; then
-    echo "[start] Building indexes from sample corpus..."
-    python -m src.indexing.build_index --sample
+    echo "[start] Building indexes from full corpus..."
+    python -m src.indexing.build_index
     echo "[start] Index build complete."
 fi
 
