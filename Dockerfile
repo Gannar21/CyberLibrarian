@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+#
 # CyberLibrarian – single container
 #
 # Build:   docker build -t cyberlibrarian .
@@ -11,6 +13,10 @@
 # Index strategy (see scripts/start.sh): by default the index is built at
 # container start from the corpus that was baked in at image-build time.
 # Set SKIP_INDEX_BUILD=true to skip if a prebuilt index volume is mounted.
+#
+# CPU-only torch: installed first in its own layer so sentence-transformers
+# does not trigger a CUDA wheel download. The verification step below the
+# requirements install confirms torch.version.cuda is None.
 
 FROM python:3.12-slim
 
@@ -25,9 +31,17 @@ RUN useradd --create-home --shell /bin/bash appuser
 
 WORKDIR /app
 
-# --- python deps (layer-cached before source copy) --------------------------
+# --- CPU-only torch (must come before requirements so pip keeps this wheel) --
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --default-timeout=120 --retries 10 \
+        torch --index-url https://download.pytorch.org/whl/cpu
+
+# --- remaining python deps --------------------------------------------------
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --default-timeout=120 --retries 10 \
+        -r requirements.txt && \
+    python -c "import torch; v=torch.version.cuda; print('torch', torch.__version__, 'cuda:', v); assert v is None, 'GPU torch installed – expected CPU-only'"
 
 # --- source code ------------------------------------------------------------
 COPY --chown=appuser:appuser . .
@@ -37,9 +51,9 @@ USER appuser
 
 EXPOSE 8501
 
-# All configuration via environment variables; no secrets in image.
-ENV LLM_API_KEY=""       \
-    LLM_MODEL=""         \
+# Non-secret configuration defaults. Secrets (LLM_API_KEY, etc.) must be
+# supplied at run time via -e or --env-file; do not set them here.
+ENV LLM_MODEL=""         \
     EMBEDDING_MODEL=""   \
     LLM_BASE_URL=""      \
     API_URL="http://localhost:8000" \
