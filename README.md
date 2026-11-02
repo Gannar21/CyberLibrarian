@@ -230,7 +230,6 @@ chroma/          ChromaDB vector store (gitignored)
 | Person | Responsibility |
 |--------|---------------|
 | Asma Gannar | Web UI, Docker deployment, evaluation pipeline, project integration |
-| nouhaamin6 | Retrieval pipeline — BM25, vector search, RRF hybrid, reranker |
-| Nouhaaouiti | Data ingestion and corpus processing |
-| Asma Aouiti | Answer generation, LLM integration, BM25 tokeniser fix |
+| Nouha Aouiti | Answer generation,Data ingestion and corpus processing |
+| Asma Aouiti | Retrieval pipeline — BM25, vector search, RRF hybrid LLM integration, 
 | eyabedoui | FastAPI retrieval API |
