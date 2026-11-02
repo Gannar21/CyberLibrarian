@@ -4,7 +4,7 @@ Each item has a question, an answer, a doc id, and two short anchor phrases (sta
 document. The script finds them in YOUR data/processed/documents.jsonl and takes the exact text between
 them as source_passage, so validate.py's "exact passage" check passes.
 
-    python3 -m eval.build_p3
+    python3 -m eval.build_owasp_questions
     python3 data/eval/validate.py data/eval/questions_p3.jsonl
 """
 from __future__ import annotations
