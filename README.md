@@ -224,12 +224,11 @@ chroma/          ChromaDB vector store (gitignored)
 ```
 
 ---
-
 ## Contributors
 
 | Person | Responsibility |
 |--------|---------------|
 | Asma Gannar | Web UI, Docker deployment, evaluation pipeline, project integration |
-| Nouha Aouiti | Answer generation,Data ingestion and corpus processing |
-| Asma Aouiti | Retrieval pipeline — BM25, vector search, RRF hybrid LLM integration, 
-| eyabedoui | FastAPI retrieval API |
+| Eya Bedoui | FastAPI retrieval API |
+| Asma Aouiti | Retrieval optimisation, improving retrieval relevance and efficiency, Recall@K evaluation (1, 3, 5, 10), retrieval latency and accuracy analysis, cost modelling per request and at 100× scale, performance optimisation, before-and-after comparisons, and technical documentation |
+| Nouha Aouiti | Answer generation, data ingestion and corpus processing |
